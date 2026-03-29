@@ -271,12 +271,81 @@ export const revealRanking = async (gameId: string, numToReveal: number) => {
 };
 
 export const finishRound = async (gameId: string) => {
-  // We handle scoring calculate on UI or here? Better here to set state to round_end
-  // Or just change phase to `round_end`. 
-  // Let gameService update round_end and then components displays score
   const gameRef = doc(db, 'games', gameId);
   await updateDoc(gameRef, {
     roundPhase: 'round_end'
+  });
+};
+
+export const startNextRound = async (
+  gameId: string, 
+  currentRankerId: string, 
+  roundScore: number, 
+  currentDeck: Card[], 
+  currentDiscard: Card[], 
+  playAreaCards: Card[], 
+  playersList: string[],
+  currentRound: number
+) => {
+  // 1. apply score
+  const playerRef = doc(db, 'games', gameId, 'players', currentRankerId);
+  const playerSnap = await getDoc(playerRef);
+  if (playerSnap.exists()) {
+    const currentScore = playerSnap.data().score || 0;
+    await updateDoc(playerRef, { score: currentScore + roundScore });
+  }
+
+  // 2. move playAreaCards into discard
+  let newDiscard = [...(currentDiscard || []), ...playAreaCards];
+  let newDeck = [...(currentDeck || [])];
+  
+  // 3. deal 5 new cards. Shuffle discard into deck if needed.
+  if (newDeck.length < 5) {
+    // shuffle discard
+    for (let i = newDiscard.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newDiscard[i], newDiscard[j]] = [newDiscard[j], newDiscard[i]];
+    }
+    newDeck = [...newDeck, ...newDiscard];
+    newDiscard = [];
+  }
+  
+  // Take up to 5 cards (if deck size is somehow less than 5, it just takes what it can)
+  const newPlayAreaCards = newDeck.splice(0, 5);
+
+  // 4. next ranker
+  const currentRankerIndex = playersList.indexOf(currentRankerId);
+  const nextRankerIndex = (currentRankerIndex + 1) % playersList.length;
+  const nextRankerId = playersList[nextRankerIndex];
+
+  // 5. update Game Doc
+  const gameRef = doc(db, 'games', gameId);
+  await updateDoc(gameRef, {
+    currentRound: currentRound + 1,
+    rankerId: nextRankerId,
+    roundPhase: 'ranking',
+    deck: newDeck,
+    discard: newDiscard,
+    playAreaCards: newPlayAreaCards,
+    rankerRankings: [1, 2, 3, 4, 5],
+    guesserRankings: [1, 2, 3, 4, 5],
+    revealedRankings: []
+  });
+};
+
+export const endGameFromRound = async (gameId: string, currentRankerId: string, roundScore: number) => {
+  // apply score
+  const playerRef = doc(db, 'games', gameId, 'players', currentRankerId);
+  const playerSnap = await getDoc(playerRef);
+  if (playerSnap.exists()) {
+    const currentScore = playerSnap.data().score || 0;
+    await updateDoc(playerRef, { score: currentScore + roundScore });
+  }
+
+  // set state to results
+  const gameRef = doc(db, 'games', gameId);
+  await updateDoc(gameRef, {
+    state: 'results'
   });
 };
 

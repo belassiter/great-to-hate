@@ -149,7 +149,7 @@ function CardItem({ card, onUpdate, onRemoveRequest }: { card: Card, onUpdate: (
       <input
         ref={inputRef}
         type="text"
-        maxLength={30}
+        maxLength={50}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onBlur={handleSave}

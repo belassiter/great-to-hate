@@ -8,6 +8,7 @@ import { subscribeToAuth } from '../services/auth';
 import type { User } from 'firebase/auth';
 
 import GameBoard from './GameBoard';
+import GameResults from './GameResults';
 
 interface GameWrapperProps {
   view: 'host' | 'player';
@@ -74,6 +75,10 @@ export default function GameWrapper({ view }: GameWrapperProps) {
 
   if (game.state === 'playing') {
     return <GameBoard game={game} myPlayerId={user.uid} players={players} />;
+  }
+
+  if (game.state === 'results') {
+    return <GameResults game={game} myPlayerId={user.uid} players={players} />;
   }
 
   // --- Render logic based on view ---

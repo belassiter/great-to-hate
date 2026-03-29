@@ -1,5 +1,5 @@
 import type { Game, PlayerData } from '../services/gameService';
-import { updateRankerRankings, confirmRankings, updateGuesserRankings, confirmGuesses, revealRanking, finishRound } from '../services/gameService';
+import { updateRankerRankings, confirmRankings, updateGuesserRankings, confirmGuesses, revealRanking, finishRound, startNextRound, endGameFromRound } from '../services/gameService';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, horizontalListSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -12,9 +12,11 @@ interface GameBoardProps {
   myPlayerId: string;
 }
 
-export default function GameBoard({ game, myPlayerId }: GameBoardProps) {
+export default function GameBoard({ game, players, myPlayerId }: GameBoardProps) {
   const isRanker = game.rankerId === myPlayerId;
   const isRankingPhase = game.roundPhase === 'ranking';
+  
+  const [showGuessModal, setShowGuessModal] = useState(false);
   
   // Local state for ranker handling smooth drag animations
   const [rankerItems, setRankerItems] = useState(game.rankerRankings);
@@ -44,6 +46,13 @@ export default function GameBoard({ game, myPlayerId }: GameBoardProps) {
 
   // Determine layout for sortable context
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  let currentRoundScore = 0;
+  if (isRoundEndPhase) {
+    const correct = game.rankerRankings.filter((val, idx) => val === game.guesserRankings[idx]).length;
+    const incorrect = 5 - correct;
+    currentRoundScore = correct - incorrect;
+  }
 
   const handleRankerDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -75,40 +84,44 @@ export default function GameBoard({ game, myPlayerId }: GameBoardProps) {
     }
   };
 
+  const getMainText = () => {
+    if (isRankingPhase) return isRanker ? "It's your turn to rank!" : "Waiting for Ranker to rank...";
+    if (isGuessingPhase) return !isRanker ? "It's the Guessers' turn!" : "Waiting for Guessers to finalize their guesses...";
+    if (isRevealingPhase) return "Reveal your Ranking!";
+    if (isRoundEndPhase) return "Round Over!";
+    return "";
+  };
+
   const getSubtext = () => {
     if (isRankingPhase) {
       return isRanker 
         ? "Drag the Ranker numbers to show what you think is Great (1) vs Hate (5)"
-        : "Waiting for Ranker to rank...";
+        : "The Ranker is currently ranking the items.";
     }
     if (isGuessingPhase) {
       return !isRanker
         ? "Work together to order the Guesser numbers to match the Ranker's thoughts!"
-        : "Waiting for Guessers to finalize their guesses...";
+        : "The Guessers are currently discussing and ordering their numbers.";
     }
     if (isRevealingPhase) {
       return isRanker
-        ? "Reveal your ranking one by one"
+        ? "Click your rankings one at a time and tell everyone why"
         : "Ranker is revealing their answers...";
     }
     if (isRoundEndPhase) {
-      const correct = game.rankerRankings.filter((val, idx) => val === game.guesserRankings[idx]).length;
-      const incorrect = 5 - correct;
-      return `Round Over! Score: ${correct - incorrect}`;
+      return "Discuss the results or proceed to the next round.";
     }
     return "";
   };
 
   return (
-    <div className="min-h-screen p-4 flex flex-col items-center bg-gray-900 text-white">
+    <div className="min-h-screen p-4 flex flex-col items-center bg-gray-900 text-white relative">
       <h1 className="text-2xl font-bold mb-2">Round {game.currentRound}</h1>
       <div className="text-center mb-8">
         <p className="text-lg font-semibold">
-          {isRanker 
-            ? "It's your turn to rank!" 
-            : "It's the Guessers' turn!"}
+          {getMainText()}
         </p>
-        <p className="text-sm text-gray-400 mt-1 max-w-lg mx-auto">
+        <p className="text-sm text-gray-400 mt-1 max-w-lg mx-auto min-h-[1.25rem]">
           {getSubtext()}
         </p>
       </div>
@@ -130,13 +143,9 @@ export default function GameBoard({ game, myPlayerId }: GameBoardProps) {
         <div className="mb-4 flex flex-col items-center gap-2">
           <button 
             className="bg-primary-600 hover:bg-primary-500 text-white font-bold py-2 px-8 rounded-full shadow-lg transition-transform active:scale-95"
-            onClick={() => {
-              if (window.confirm("Are you sure you're ready to guess?")) {
-                confirmGuesses(game.id);
-              }
-            }}
+            onClick={() => setShowGuessModal(true)}
           >
-            Guess!
+            Done Guessing!
           </button>
         </div>
       )}
@@ -153,25 +162,70 @@ export default function GameBoard({ game, myPlayerId }: GameBoardProps) {
         </div>
       )}
 
-      {/* END ROUND BUTTONS */}
+      {/* END ROUND BUTTONS & SCOREBOARD */}
       {isRoundEndPhase && (
-        <div className="mb-4 flex gap-4">
-          <button 
-            className="bg-primary-600 hover:bg-primary-500 text-white font-bold py-2 px-8 rounded-full shadow-lg transition-transform active:scale-95"
-            onClick={() => {
-              // TODO: Next round dispatch logic
-            }}
-          >
-            Another round
-          </button>
-          <button 
-            className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-8 rounded-full shadow-lg transition-transform active:scale-95"
-            onClick={() => {
-              // TODO: End game logic
-            }}
-          >
-            End the game
-          </button>
+        <div className="mb-4 flex flex-col items-center gap-4 w-full max-w-sm">
+          <div className="bg-gray-800 p-4 rounded-lg w-full shadow-lg border border-gray-700">
+            <h2 className="text-xl font-bold mb-3 text-center text-primary-400">Current Open Book Scores</h2>
+            <div className="flex flex-col gap-2">
+              {[...players].map(p => {
+                const isThisRanker = p.id === game.rankerId;
+                const displayScore = (p.score || 0) + (isThisRanker ? currentRoundScore : 0);
+                return { ...p, displayScore };
+              }).sort((a, b) => b.displayScore - a.displayScore)
+              .map(p => (
+                <div key={p.id} className="flex justify-between items-center bg-gray-700 px-3 py-2 rounded">
+                  <span className="font-semibold text-gray-200">
+                    {p.name} 
+                    {p.id === myPlayerId && (
+                      <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full inline-block">You</span>
+                    )}
+                  </span>
+                  <span className="font-bold text-white text-lg">{p.displayScore}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {isRanker ? (
+            <div className="flex gap-4">
+              <button 
+                className="bg-primary-600 hover:bg-primary-500 text-white font-bold py-2 px-8 rounded-full shadow-lg transition-transform active:scale-95"
+                onClick={() => {
+                  const correct = game.rankerRankings.filter((val, idx) => val === game.guesserRankings[idx]).length;
+                  const incorrect = 5 - correct;
+                  const score = correct - incorrect;
+                  startNextRound(
+                    game.id, 
+                    game.rankerId, 
+                    score, 
+                    game.deck || [], 
+                    game.discard || [], 
+                    game.playAreaCards || [], 
+                    game.players, 
+                    game.currentRound
+                  );
+                }}
+              >
+                Another round
+              </button>
+              <button 
+                className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-8 rounded-full shadow-lg transition-transform active:scale-95"
+                onClick={() => {
+                  const correct = game.rankerRankings.filter((val, idx) => val === game.guesserRankings[idx]).length;
+                  const incorrect = 5 - correct;
+                  const score = correct - incorrect;
+                  endGameFromRound(game.id, game.rankerId, score);
+                }}
+              >
+                End the game
+              </button>
+            </div>
+          ) : (
+            <div className="text-gray-400 italic">
+              Waiting for Ranker to continue...
+            </div>
+          )}
         </div>
       )}
 
@@ -190,15 +244,17 @@ export default function GameBoard({ game, myPlayerId }: GameBoardProps) {
               <div className="flex flex-col md:flex-row gap-4 items-center">
                 {rankerItems.map((num) => {
                   const isRevealed = game.revealedRankings?.includes(num);
-                  const showNumber = canSeeDeck || isRevealed || isRoundEndPhase;
+                  const showNumber = isRanker || isRevealed || isRoundEndPhase;
                   
                   return (
                     <SortableCard 
                       key={`ranker-${num}`} 
                       id={num}
                       disabled={!isRanker || !isRankingPhase}
-                      className={`bg-primary-600 h-24 md:h-16 w-16 md:w-32 flex items-center justify-center font-bold rounded-lg shrink-0 z-10 
-                        ${(isRevealingPhase && isRanker && !isRevealed) ? 'cursor-pointer hover:ring-4 ring-white ring-opacity-50' : ''}`}
+                      className={`h-24 md:h-16 w-16 md:w-32 flex items-center justify-center font-bold rounded-lg shrink-0 z-10 
+                        ${(isRevealingPhase && isRanker && !isRevealed) ? 'cursor-pointer hover:ring-4 ring-white ring-opacity-50' : ''}
+                        ${(isRevealed && isRanker) ? 'bg-gray-600 text-gray-300' : 'bg-primary-600 text-white'}
+                        ${(!showNumber && !isRanker) ? 'bg-primary-600 text-white' : ''}`}
                     >
                       {/* For revealing, ranker clicks */}
                       <div 
@@ -246,12 +302,16 @@ export default function GameBoard({ game, myPlayerId }: GameBoardProps) {
             >
               <div className="flex flex-col md:flex-row gap-4 items-center">
                 {guesserItems.map((num) => {
+                  const guesserBg = (!isRanker && isGuessingPhase) 
+                    ? "bg-green-600 border border-green-500 text-white" 
+                    : "bg-gray-700 border border-gray-600 text-gray-300";
+
                   return (
                     <SortableCard 
                       key={`guesser-${num}`} 
                       id={num}
                       disabled={isRanker || !isGuessingPhase}
-                      className="bg-gray-700 border border-gray-600 text-white h-24 md:h-16 w-16 md:w-32 flex items-center justify-center font-bold rounded-lg shrink-0 z-10"
+                      className={`${guesserBg} h-24 md:h-16 w-16 md:w-32 flex items-center justify-center font-bold rounded-lg shrink-0 z-10`}
                     >
                       {num}
                     </SortableCard>
@@ -263,6 +323,32 @@ export default function GameBoard({ game, myPlayerId }: GameBoardProps) {
         </div>
 
       </div>
+
+      {showGuessModal && (
+        <div className="fixed inset-0 pointer-events-none flex items-start justify-center pt-24 z-50">
+          <div className="bg-gray-800 p-6 rounded-lg text-center shadow-2xl border border-gray-600 space-y-6 max-w-sm mx-4 pointer-events-auto">
+            <h2 className="text-xl font-bold text-white">Are you sure you're ready to guess?</h2>
+            <div className="flex gap-4 justify-center">
+              <button 
+                className="bg-primary-600 hover:bg-primary-500 text-white font-bold py-2 px-6 rounded-full transition-transform active:scale-95"
+                onClick={() => {
+                  setShowGuessModal(false);
+                  confirmGuesses(game.id);
+                }}
+              >
+                Yes, Guess!
+              </button>
+              <button 
+                className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full transition-transform active:scale-95"
+                onClick={() => setShowGuessModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
