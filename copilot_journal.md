@@ -1,4 +1,6 @@
-### March 29, 2026 - 2:55 PM (Pacific)
+### March 29, 2026 - 3:10 PM (Pacific)
+
+> Adjusted GitHub Action strictly to checkout@v3 to bypass a known breaking interaction where checkout@v4 causes Firebase Deploy Docker runner to throw error 128 due to strict new container boundary path ownership enforcement in newer Git/v4 versions.\n\n### March 29, 2026 - 2:55 PM (Pacific)
 
 > Adjusted Github Action token parameters and checkout depths to avert error 128.\n\n### March 29, 2026 - 1:45 PM (Pacific)
 
