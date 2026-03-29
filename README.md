@@ -6,6 +6,7 @@
 [**great-to-hate.web.app**](https://great-to-hate.web.app/)
 
 ## How It Works
+
 Each game consists of a few simple phases:
 
 1. **Setup & Lobby**: Players collaborate to create a deck of cards by writing down different things (prompts, objects, ideas) alongside a set of default cards.
