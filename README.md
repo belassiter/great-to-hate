@@ -60,6 +60,11 @@ If you wish to run the project locally or contribute to the development:
    npm run lint
    ```
 
+6. **Deployment**:
+  ```bash
+  npm run build ; npx firebase deploy
+  ```
+  
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.

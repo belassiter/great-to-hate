@@ -1,3 +1,16 @@
+### March 29, 2026 - 3:20 PM (Pacific)
+
+> Ok, that worked. Let's delete GitHub action scripts for now, try again some other day.
+> Also, the help modal needs to be opaque
+
+**Changes:**
+- Deleted the .github/workflows directory entirely to remove the failing GitHub Actions CI/CD pipeline, relying entirely on manual deployments for now.
+- Added explicit color mappings for primary-100 through primary-900 to src/index.css. Tailwind v4 does not automatically generate shades if only a few are defined in @theme, which was causing g-primary-800 to render as fully transparent on the HelpModal.
+- Ran the Definition of Done steps (
+pm run lint, 
+pm test, 
+pm run build), all passing successfully.
+
 ### March 29, 2026 - 3:15 PM (Pacific)
 
 > Roll back GitHub Secrets experiment that was endlessly causing Action failures. Reverted directly back to hardcoded public Firebase keys for simplicity of deployment without needing complex CI environment variable injection.\n\n### March 29, 2026 - 3:10 PM (Pacific)
@@ -151,5 +164,6 @@ H o s t   i s   a l w a y s   P l a y e r   # 1 
  S t a r t   G a m e 
  
  
+
 
 
