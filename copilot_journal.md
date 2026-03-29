@@ -1,4 +1,6 @@
-### March 29, 2026 - 3:10 PM (Pacific)
+### March 29, 2026 - 3:15 PM (Pacific)
+
+> Roll back GitHub Secrets experiment that was endlessly causing Action failures. Reverted directly back to hardcoded public Firebase keys for simplicity of deployment without needing complex CI environment variable injection.\n\n### March 29, 2026 - 3:10 PM (Pacific)
 
 > Adjusted GitHub Action strictly to checkout@v3 to bypass a known breaking interaction where checkout@v4 causes Firebase Deploy Docker runner to throw error 128 due to strict new container boundary path ownership enforcement in newer Git/v4 versions.\n\n### March 29, 2026 - 2:55 PM (Pacific)
 
