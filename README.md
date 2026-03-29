@@ -1,73 +1,66 @@
-# React + TypeScript + Vite
+# Great to Hate
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Great to Hate** is a multiplayer party game that tests how well you know your friends! Find out who is an "Open Book" and who is a complete mystery by guessing their personal rankings of user-submitted prompts.
 
-Currently, two official plugins are available:
+## Play the Game
+[**great-to-hate.web.app**](https://great-to-hate.web.app/)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## How It Works
 
-## React Compiler
+Each game consists of a few simple phases:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. **Setup & Lobby**: Players collaborate to create a deck of cards by writing down different things (prompts, objects, ideas) alongside a set of default cards.
+2. **Ranking**: The active "Ranker" is dealt 5 cards from the deck. They secretly order these cards from best (1) to worst (5) based on their own preference.
+3. **Guessing**: All other players (the "Guessers") work together dynamically Dragging & Dropping to guess the Ranker's exact order.
+4. **Reveal & Scoring**: The Ranker reveals their true ranking one by one. Points (Open Book Scores) are awarded to the Ranker based on how accurately the Guessers predicted their choices.
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+This project is built to accommodate real-time state synchronization, drag-and-drop mechanics, and high-performance React UI updates.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Frontend Framework**: [React 19](https://react.dev/) with [TypeScript](https://www.typescriptlang.org/) and [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **State & Real-time Database**: [Firebase Firestore](https://firebase.google.com/docs/firestore) & Anonymous Authentication
+- **Drag & Drop**: [@dnd-kit/core](https://dndkit.com/)
+- **Testing**: [Vitest](https://vitest.dev/) and React Testing Library
+- **Hosting / CI/CD**: Firebase Hosting deployed via GitHub Actions
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Architecture Overview
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+The app is built entirely as a client-side Single Page Application (SPA) driven by a Firebase Firestore backend state machine.
+- `Game Service` (`src/services/gameService.ts`): Implements the core game logic by mapping player events (joining, starting game, ranking updates) directly to Firestore documents representing the game's mutable state natively through `onSnapshot` listeners.
+- **Drag-n-Drop Engine**: Utilizes `@dnd-kit/sortable` contexts seamlessly hooked into local-state first, sending batch modifications to Firestore upon user confirmation.
+- **Data Model**: Follows a denormalized NoSQL schema representing a top-level `games` document containing arrays of cards, discard piles, and sub-collections of `players`. 
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Development Setup
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+If you wish to run the project locally or contribute to the development:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/belassiter/great-to-hate.git
+   cd great-to-hate
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Firebase Setup**:
+   You'll need a Firebase project configured with Firestore and Anonymous Authentication enabled. Populate a `firebase-config.txt` or adapt `src/services/firebase.ts` with your environment keys.
+
+4. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+
+5. **Run Tests & Linter**:
+   ```bash
+   npm run test
+   npm run lint
+   ```
+
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.

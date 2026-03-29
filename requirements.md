@@ -52,7 +52,7 @@ A game where a player is given 5 things to rank, and the other players collabora
  - [x] Creates a deck of cards. This includes all custom cards, and also default cards if the toggle was on. Default cards are currently stored in default-cards-md, but you're welcome to change the filetype and/or move it to a different folder. The card set has these properties for each card: Text, Source ("default" or the player's name), ID# (unique ID to reference a card internally)
  - [x] The deck is shuffled, to have a random order
  - [x] The list of players is shuffled, to have a random order.
- - [x] An "Open Book" score value is kept for each player, starting at 0. 
+ - [x] An "Open Book Scores" value is kept for each player, starting at 0.
 ## Playing a round
  - [x] The next player on the player list is chosen as the Ranker. All other players are Guessers.
  - [x] The five top deck cards are dealt into the play area, in a row, face-down. If the deck becomes empty, shuffle the discard pile to refresh the deck.
@@ -78,7 +78,7 @@ A game where a player is given 5 things to rank, and the other players collabora
  - [x] For "Another round". Deck cards a put into a discard pile. The next player in the player list becomes the ranker. The round score is added to the Ranker's total score. A new round begins.
 ## Ending of game
  - [x] For "End the game". All players see the "Game Results" screen.
- - [x] It has a table with Player names and Open Book score. The player with the highest score has a crown emoji and book emoji by their name, and the font of their name is bolded.
+ - [x] It has a table with Player names and Open Book Scores. The player with the highest score has a crown emoji and book emoji by their name, and the font of their name is bolded.
  - [x] It has a button for "New game", which sends them back to initial screen
 
 # Visuals

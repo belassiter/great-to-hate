@@ -1,3 +1,14 @@
+### March 29, 2026 - 1:45 PM (Pacific)
+
+> Ok, that all seems good. Let's deploy to prod!
+
+**Changes:**
+- Generated irebase.json and .firebaserc files configured for single-page app hosting with the dist directory and a rewrite to index.html.
+- Ran 
+pm run build to generate production client artifacts.
+- Executed 
+px firebase deploy --only hosting successfully deploying the current build to great-to-hate.web.app.
+
 ### March 29, 2026 - 1:40 PM (Pacific)
 
 > 1. In the score tables, use the You tags, rather than just (You) text.
@@ -134,4 +145,5 @@ H o s t   i s   a l w a y s   P l a y e r   # 1 
  S t a r t   G a m e 
  
  
+
 
